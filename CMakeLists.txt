@@ -17,7 +17,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)  # Shared libraries
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)  # Static libraries
 
 # Add libraries first (math_lib and utils_lib)
-#add_subdirectory(libs)
+add_subdirectory(libs)
 
 # Then add executables (calculator_app)
 add_subdirectory(apps)

@@ -18,14 +18,18 @@
 using namespace std;
 
 struct client {
-    thread clientThread;
     string clientName;
     int clientSocket;
+    string room;
+    thread clientThread;
 };
 
-void ClientActions(int clientSocket) {
+void ClientActions(int clientSocket, client &this_client, vector<client> &clients) {
+
+    // START RECEIVE MESSAGES
+
     while (true) {
-        // recieving data
+        // receiving data
         char buffer[1024] = { 0 };
         ssize_t bytes = recv(clientSocket, buffer, sizeof(buffer), 0);
         if (bytes == 0) {
@@ -35,10 +39,45 @@ void ClientActions(int clientSocket) {
             return;
         }
 
-        cout << "Message from client: " << buffer
+        JS::ParseContext context(buffer);
+        common_lib::message obj;
+        context.parseTo(obj);
+
+        if (obj.type == "communication") {
+            cout << "ROOM " << obj.room_code << ": " << "COMMUNICATION MESSAGE: " << obj.author << ": " << obj.content
                   << endl;
+        }else if (obj.type == "server_action") {
+            cout << "ROOM " << obj.room_code << ": " << "SERVER ACTION: " << obj.author << ": " << obj.content
+                  << endl;
+        } else if (obj.type == "error") {
+            cout << "ROOM " << obj.room_code << ": " << "ERROR: " << ": " << obj.author << ": " << obj.content
+                  << endl;
+        } else {
+            cout << "ROOM " << obj.room_code << ": " << "OTHER MESSAGE: " << ": " << obj.author << ": " << obj.content
+                  << endl;
+        }
+
+        this_client.room = obj.room_code;
+
+        common_lib::message returnmsg = common_lib::message(obj.content, obj.author, obj.room_code, 200, "server_response");
+
+        string json_chat_msg = JS::serializeStruct(returnmsg);
+
+        // sending data
+        const char* json_returnmsg = json_chat_msg.c_str();
+
+        for (int i = 0; i < clients.size(); i++) {
+
+            if (obj.content == "Disconnected" && clients[i].clientSocket == clientSocket) continue;
+
+            if (clients[i].room != this_client.room) continue;
+
+            send(clients[i].clientSocket, json_returnmsg, strlen(json_returnmsg), 0);
+        }
 
     }
+
+    // END RECEIVE MESSAGES
 }
 
 void TerminateProgram(vector<client> &clients, int &serverSocket) {
@@ -82,7 +121,8 @@ int main()
             int clientSocket
                 = accept(serverSocket, nullptr, nullptr);
 
-            clients.emplace_back(std::thread(ClientActions, clientSocket), "client", clientSocket);
+            clients.emplace_back("client", clientSocket);
+            clients.back().clientThread = std::thread(ClientActions, clientSocket, std::ref(clients.back()), std::ref(clients));
         }
 
     } catch (int e) {

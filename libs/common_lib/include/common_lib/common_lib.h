@@ -10,9 +10,9 @@ namespace common_lib {
     struct message {
         std::string content;
         std::string author;
-        int room_code;
-        int message_code;
-        std::string type;
+        std::string room_code;
+        int message_code; // 200
+        std::string type; // communication, server_action, error, server_response
 
         JS_OBJ(content, author, room_code, message_code, type);
     };

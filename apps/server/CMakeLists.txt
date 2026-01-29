@@ -10,4 +10,5 @@ target_link_libraries(server
         PRIVATE
         common_lib
         json_struct
+        nlohmann
 )

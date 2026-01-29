@@ -12,6 +12,8 @@
 #include <string>
 #include <functional>
 
+#include "common_lib/common_lib.h"
+
 enum class UIState { Join, Chat };
 
 class ChatUI {
@@ -30,6 +32,8 @@ public:
 
     void run();
 
+    ChatUI(std::string prefsPath);
+
 private:
     UIState state = UIState::Join;
 
@@ -47,8 +51,15 @@ private:
     std::vector<std::string> messages;
     std::string chat_input;
 
-    void PrepareConnection(std::string& tempPort);
+    ftxui::ScreenInteractive* uiScreen;
+
+    void PrepareConnection(std::string& tempPort, ftxui::ScreenInteractive& screen);
     void Quit(ftxui::ScreenInteractive& screen);
+    void Disconnect(ftxui::ScreenInteractive& screen);
+    void Send(std::string& msg);
+
+    common_lib::Preferences pref;
+
 
 };
 

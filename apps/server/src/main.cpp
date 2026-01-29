@@ -59,7 +59,7 @@ void ClientActions(int clientSocket, client &this_client, vector<client> &client
 
         this_client.room = obj.room_code;
 
-        common_lib::message returnmsg = common_lib::message(obj.content, obj.author, obj.room_code, 200, "server_response");
+        common_lib::message returnmsg = common_lib::message(obj.content, obj.author, obj.room_code, (obj.type == "server_action") ? 201 : 200, "server_response");
 
         string json_chat_msg = JS::serializeStruct(returnmsg);
 

@@ -11,7 +11,11 @@
 
 int main() {
 
-    ChatUI ui;
+    std::string windows_settings_path = "%APPDATA%/ChatPlusPlus/settings.json";
+    std::string linux_settings_path = "~/.config/YourApp/settings.json";
+    std::string macos_settings_path = "~/Library/Application Support/YourApp/settings.json";
+
+    ChatUI ui("settings.json");
     Client client;
 
     // Set Join Callback: Init, connect, and start listener
@@ -31,15 +35,20 @@ int main() {
         ui.push_message(msg);
     });
 
-        // Set quit callback: stop listener, Disconnect
+    // Set quit callback: stop listener, Disconnect, stop UI
     ui.set_quit_callback([&](ftxui::ScreenInteractive& screen) {
         std::thread([&] {
             client.disconnect_client();
         }).detach();
 
         screen.ExitLoopClosure()();
+    });
 
-        //exit(0);
+    // Set disconnect callback: stop listener, Disconnect
+    ui.set_disconnect_callback([&]() {
+        std::thread([&] {
+            client.disconnect_client();
+        }).detach();
     });
 
     ui.run();

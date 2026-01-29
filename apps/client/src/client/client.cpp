@@ -59,21 +59,23 @@ int Client::connect_client(const std::string &ipAddr, uint16_t port) {
 // disconnect_client() -- Disconnects the client from the current server
 void Client::disconnect_client() {
 
-    send_raw(leave_msg);
+    if (clientSocket > 0) {
+        send_raw(leave_msg);
 
-    std::cout << "Leave message sent" << std::endl;
+        std::cout << "Leave message sent" << std::endl;
 
-    shutdown(clientSocket, SHUT_RDWR);
+        shutdown(clientSocket, SHUT_RDWR);
 
-    close(clientSocket); // Close connection to server
+        close(clientSocket); // Close connection to server
 
-    std::cout << "Socket Closed" << std::endl;
+        std::cout << "Socket Closed" << std::endl;
+    }
 
-    stop_listener();
+    if (listenerCreated) {
+        stop_listener();
+    }
 
     std::cout << "Disconnected" << std::endl;
-
-    return;
 }
 
 // send_msg(string, string) -- Sends a message to the server
@@ -104,6 +106,7 @@ void Client::send_raw(const std::string &json) {
 void Client::start_listener() {
     running = true;
     pthread_create(&listenerThread, nullptr, &Client::listener_entry, this);
+    listenerCreated = true;
 }
 
 void Client::set_message_callback(MessageCallback cb) {
@@ -137,6 +140,8 @@ void Client::stop_listener() {
     running = false;
 
     pthread_join(listenerThread, nullptr);
+
+    listenerCreated = false;
 }
 
 Client::~Client() {

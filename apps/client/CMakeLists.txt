@@ -19,6 +19,7 @@ target_link_libraries(client
         PRIVATE
         common_lib
         json_struct
+        nlohmann
 
         PRIVATE ftxui::screen
         PRIVATE ftxui::dom

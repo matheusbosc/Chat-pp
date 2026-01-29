@@ -51,6 +51,7 @@ private:
 
     MessageCallback messageCallback;
     std::atomic<bool> running{false};
+    bool listenerCreated{false};
 
     void listener_loop();
     static void* listener_entry(void* arg) {

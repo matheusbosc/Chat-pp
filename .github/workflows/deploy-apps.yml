@@ -1,0 +1,77 @@
+name: Chat++ Build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      # Cache vcpkg to speed up builds
+      - name: Cache vcpkg
+        uses: actions/cache@v3
+        with:
+          path: ~/.vcpkg
+          key: vcpkg-${{ matrix.os }}-${{ hashFiles('**/vcpkg.json') }}
+          restore-keys: |
+            vcpkg-${{ matrix.os }}-
+
+      # Install dependencies
+      - name: Setup build tools (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt update
+          sudo apt install -y g++ clang cmake ninja-build
+
+      - name: Setup build tools (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' -y
+          choco install ninja -y
+          choco install mingw -y
+
+      # Create build directory
+      - name: Create build directory
+        run: mkdir -p build
+
+      # Configure CMake
+      - name: CMake configure
+        run: cmake -B build -G Ninja -S .
+
+      # Detect number of CPU cores
+      - name: Detect CPU cores
+        id: cores
+        run: |
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            echo "cores=$(nproc)" >> $GITHUB_OUTPUT
+          else
+            echo "cores=$(NUMBER_OF_PROCESSORS)" >> $GITHUB_OUTPUT
+          fi
+
+      # Build server
+      - name: Build server
+        run: cmake --build build --target server -- -j ${{ steps.cores.outputs.cores }}
+
+      # Build client
+      - name: Build client
+        run: cmake --build build --target client -- -j ${{ steps.cores.outputs.cores }}
+
+      # List binaries
+      - name: List binaries
+        run: ls -l build
+
+      # Upload artifacts
+      - name: Upload binaries
+        uses: actions/upload-artifact@v3
+        with:
+          name: chatpp-binaries-${{ matrix.os }}
+          path: build/
